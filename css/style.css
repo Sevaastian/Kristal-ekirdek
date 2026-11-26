@@ -89,18 +89,124 @@ button:active { transform: scale(0.94); }
 @keyframes pulseText { from { transform: scale(0.95); opacity: 0.85; } to { transform: scale(1.06); opacity: 1; } }
 .pulse-anim { animation: btnPulse 2s infinite; }
 @keyframes btnPulse { 0% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0.6); } 70% { box-shadow: 0 0 0 14px rgba(0, 242, 254, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0); } }
-/* GALAXY MAP + LEVEL RESULTS */
-.levels-modal,.result-modal{width:min(94vw,620px);max-height:90%;overflow:auto}
-.galaxy-tabs{display:flex;gap:8px;overflow-x:auto;padding:12px 2px;scrollbar-width:thin}
-.galaxy-tab{flex:0 0 auto;border:1px solid #ffffff20;background:#111827;color:#aab4ca;border-radius:18px;padding:9px 13px;font:inherit;font-size:11px;cursor:pointer}
-.galaxy-tab.active{border-color:var(--accent,#00f2fe);color:#fff;box-shadow:0 0 16px color-mix(in srgb,var(--accent,#00f2fe) 35%,transparent)}
-.map-stats{display:flex;justify-content:space-between;gap:8px;color:#9ba9c4;font-size:11px;padding:8px 0}
-.map-total{color:#ffd86b;font-weight:800;font-size:12px}
-.level-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;padding:10px 0;max-height:32vh;overflow:auto}
-.level-node{aspect-ratio:1;border-radius:14px;border:1px solid #ffffff20;background:linear-gradient(145deg,#182238,#0b1020);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-weight:800}
-.level-node small{font-size:9px;color:#ffd86b;letter-spacing:1px}.level-node.locked{opacity:.28;filter:grayscale(1);cursor:not-allowed}.level-node.done{border-color:#3de6bb}.level-node.selected{outline:2px solid var(--accent,#00f2fe);box-shadow:0 0 20px color-mix(in srgb,var(--accent,#00f2fe) 35%,transparent);transform:scale(1.04)}
-.level-node.boss{background:linear-gradient(145deg,#3a172c,#140b1b);border-color:#ff668d}
-.selected-level-info{padding:12px;margin:8px 0 12px;background:#ffffff08;border:1px solid #ffffff12;border-radius:12px;color:#b9c5dc;font-size:12px;line-height:1.6;min-height:58px}
-.result-kicker{font-size:10px;letter-spacing:3px;color:#8ea3c9}.result-stars{font-size:42px;letter-spacing:7px;color:#ffd45c;text-shadow:0 0 22px #ffbf3c;margin:12px 0}.result-stars .empty{color:#39445a;text-shadow:none}
-.result-criteria{font-size:11px;color:#9eacc5;line-height:1.6;margin:10px 0 18px}.result-modal .stats-grid{grid-template-columns:repeat(2,1fr)}
-@media(max-width:420px){.level-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.level-node{border-radius:11px}.map-stats{font-size:9px}}
+
+/* =========================================================
+   KRİSTAL ÇEKİRDEK — YENİ EKRANLAR
+   Orijinal neon / cam tasarım dili korunarak eklendi.
+   ========================================================= */
+.menu-actions { gap: 10px; }
+.menu-actions .primary-btn { padding: 17px 14px; }
+.menu-actions .secondary-btn { padding: 13px 14px; }
+
+.levels-modal,
+.result-modal {
+    width: 100%;
+    max-width: 440px;
+    max-height: 88%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,242,254,.45) transparent;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(0,242,254,.10), transparent 48%),
+      linear-gradient(160deg, rgba(15,22,45,.98), rgba(7,10,24,.98));
+    border-color: rgba(0,242,254,.22);
+    box-shadow: 0 20px 60px rgba(0,0,0,.68), 0 0 32px rgba(0,242,254,.09);
+}
+.levels-modal::-webkit-scrollbar,
+.result-modal::-webkit-scrollbar { width: 5px; }
+.levels-modal::-webkit-scrollbar-thumb,
+.result-modal::-webkit-scrollbar-thumb { background: rgba(0,242,254,.35); border-radius: 99px; }
+
+.levels-modal .modal-header { gap: 10px; }
+.levels-modal .modal-header h2 { font-size: 19px; letter-spacing: 1.6px; }
+.galaxy-tabs {
+    display: flex; gap: 8px; overflow-x: auto; padding: 12px 2px 14px;
+    scrollbar-width: thin; scrollbar-color: rgba(0,242,254,.35) transparent;
+}
+.galaxy-tab {
+    flex: 0 0 auto; border: 1px solid rgba(255,255,255,.13);
+    background: rgba(15,20,40,.78); color: rgba(255,255,255,.72);
+    border-radius: 999px; padding: 9px 13px; font: inherit;
+    font-size: 10px; font-weight: 800; letter-spacing: .35px;
+}
+.galaxy-tab.active {
+    border-color: var(--accent, var(--primary)); color: #fff;
+    background: color-mix(in srgb, var(--accent, var(--primary)) 16%, rgba(15,20,40,.92));
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent, var(--primary)) 25%, transparent);
+}
+.map-stats {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 7px;
+    color: rgba(255,255,255,.62); font-size: 10px; line-height: 1.5;
+    padding: 9px 12px; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px; background: rgba(255,255,255,.035);
+}
+.map-total { color: var(--gold); font-weight: 900; font-size: 12px; white-space: nowrap; }
+.level-grid {
+    display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 9px;
+    padding: 12px 2px; max-height: 30vh; overflow-y: auto;
+}
+.level-node {
+    aspect-ratio: 1; min-width: 0; border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: linear-gradient(145deg, rgba(31,48,78,.95), rgba(10,16,34,.98));
+    color: #fff; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 4px; font-weight: 900;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.level-node span { font-size: 15px; }
+.level-node small { color: var(--gold); font-size: 9px; letter-spacing: 1px; white-space: nowrap; }
+.level-node.locked { opacity: .28; filter: grayscale(1); cursor: not-allowed; }
+.level-node.done { border-color: rgba(0,255,180,.55); background: linear-gradient(145deg, rgba(15,65,65,.9), rgba(8,22,34,.98)); }
+.level-node.selected {
+    outline: 2px solid var(--primary); outline-offset: 2px;
+    box-shadow: 0 0 20px rgba(0,242,254,.24), inset 0 0 15px rgba(0,242,254,.10);
+    transform: translateY(-2px);
+}
+.level-node.boss { border-color: rgba(255,100,145,.55); background: linear-gradient(145deg, #451b38, #170d25); }
+.level-node.boss.selected { outline-color: #ff8ab5; box-shadow: 0 0 20px rgba(255,100,145,.28); }
+.selected-level-info {
+    padding: 13px 14px; margin: 5px 0 10px;
+    background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.10);
+    border-radius: 14px; color: rgba(255,255,255,.72);
+    font-size: 11px; line-height: 1.65; text-align: left; min-height: 66px;
+}
+#btn-start-selected:disabled,
+#btn-result-next:disabled { opacity: .35; filter: grayscale(.6); cursor: not-allowed; }
+.result-kicker { font-size: 10px; letter-spacing: 3px; color: var(--primary); font-weight: 900; }
+.result-modal h2 { text-shadow: 0 0 18px rgba(0,242,254,.25); }
+.result-stars {
+    font-size: 43px; line-height: 1.2; letter-spacing: 7px; color: var(--gold);
+    text-shadow: 0 0 22px rgba(255,215,0,.55); margin: 8px 0 4px;
+    animation: starReveal .55s cubic-bezier(.2,.8,.2,1) both;
+}
+.result-stars .empty { color: rgba(255,255,255,.16); text-shadow: none; }
+.result-modal #result-subtitle { color: rgba(255,255,255,.68); font-size: 12px; }
+.result-modal .stats-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.result-modal .stat-box { border: 1px solid rgba(255,255,255,.07); background: rgba(255,255,255,.045); }
+.result-modal .stat-val { font-size: 22px; }
+.result-criteria {
+    font-size: 11px; color: rgba(255,255,255,.62); line-height: 1.6;
+    padding: 10px 12px; margin: 0 0 4px; border-radius: 12px;
+    background: rgba(0,242,254,.055); border: 1px solid rgba(0,242,254,.12);
+}
+@keyframes starReveal { from { opacity: 0; transform: scale(.65) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+@media (max-width: 420px) {
+    .menu-actions { gap: 8px; }
+    .menu-actions .primary-btn { padding: 15px 12px; font-size: 16px; }
+    .menu-actions .secondary-btn { padding: 11px 10px; font-size: 12px; }
+    .levels-modal { padding: 22px 15px; }
+    .levels-modal .modal-header h2 { font-size: 16px; }
+    .level-grid { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
+    .level-node { border-radius: 11px; }
+    .level-node span { font-size: 13px; }
+    .map-stats { font-size: 9px; }
+    .result-modal { padding: 22px 16px; }
+}
+@media (max-height: 700px) {
+    .title-area { margin: 8px 0; }
+    .game-title { font-size: 38px; }
+    .mission-card { padding: 10px 14px; margin-bottom: 10px; }
+    .tutorial-hint { margin-top: 8px; font-size: 10px; }
+    .levels-modal, .result-modal { max-height: 92%; }
+}
