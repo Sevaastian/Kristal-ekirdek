@@ -92,7 +92,7 @@ const Game = {
 
     initInput() {
         const startThrust = (e) => {
-            if (e && e.target && e.target.closest('button')) return;
+            if (e && e.cancelable) e.preventDefault();
             AudioEngine.init();
             if (this.state === 'PLAYING' && !this.isThrusting) {
                 this.isThrusting = true;
@@ -105,9 +105,9 @@ const Game = {
             this.isThrusting = false;
         };
 
-        const wrapper = document.getElementById('game-wrapper');
-        wrapper.addEventListener('pointerdown', startThrust);
-        wrapper.addEventListener('touchstart', startThrust, { passive: true });
+        // Dokunmaları sadece canvas üzerinden al (butonlara asla müdahale etmez)
+        this.canvas.addEventListener('pointerdown', startThrust);
+        this.canvas.addEventListener('touchstart', startThrust, { passive: false });
         window.addEventListener('pointerup', endThrust);
         window.addEventListener('pointercancel', endThrust);
         window.addEventListener('touchend', endThrust);
@@ -148,7 +148,7 @@ const Game = {
         this.sessionCrystals = 0;
         this.survivalTimer = 0;
         this.isThrusting = false;
-        this.graceTimer = 0.65; // Başlangıçta oyuncuya nefes alma payı
+        this.graceTimer = 0.65;
         this.hitStopTimer = 0;
         this.shakeTime = 0;
 
@@ -181,6 +181,7 @@ const Game = {
 
     quitToMenu() {
         this.state = 'MENU';
+        this.isThrusting = false;
         UIManager.hideAllModals();
         UIManager.refreshMenu();
         UIManager.showScreen('menu-screen');
@@ -273,7 +274,6 @@ const Game = {
             this.comboCharge = Math.max(0, this.comboCharge - 0.06 * dt);
         }
 
-        // İlk 0.65 saniyede oyuncunun yörüngesi dengede tutulur
         if (this.graceTimer > 0 && !this.isThrusting) {
             this.graceTimer -= dt;
             const safeOrbit = (this.minOrbit + this.maxOrbit) * 0.45;
@@ -288,7 +288,6 @@ const Game = {
             this.player.update(dt, this.isThrusting, this.centerX, this.centerY, difficulty);
         }
 
-        // Sınır Kontrolleri (İç Çekirdek ve Dış Karanlık Kuşak)
         if (this.player.orbitRadius <= this.minOrbit || this.player.orbitRadius >= this.maxOrbit) {
             if (this.player.isSupernova) {
                 this.player.orbitRadius = Math.max(this.minOrbit + 4, Math.min(this.maxOrbit - 4, this.player.orbitRadius));
@@ -300,13 +299,11 @@ const Game = {
             }
         }
 
-        // Çekirdek Öpücüğü (Core Kiss)
         if (this.player.orbitRadius < this.minOrbit + 14 && Math.random() < 4 * dt) {
             this.score += 2 * this.combo;
             UIManager.spawnFloatingText(this.player.x, this.player.y - 16, `ÇEKİRDEK +${2 * this.combo}`, '#00f2fe');
         }
 
-        // Kristal Güncelleme & Toplama
         for (let i = this.crystals.length - 1; i >= 0; i--) {
             const c = this.crystals[i];
             c.update(dt, this.centerX, this.centerY);
@@ -349,7 +346,6 @@ const Game = {
             this.spawnCrystalRing(2);
         }
 
-        // Engel Güncelleme & Çarpışma / Kıl Payı
         const theme = StorageManager.getActiveTheme();
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obs = this.obstacles[i];
@@ -418,7 +414,6 @@ const Game = {
         }
         ctx.globalAlpha = 1;
 
-        // Dış Tehlike Çemberi
         ctx.save();
         ctx.strokeStyle = theme.danger;
         ctx.lineWidth = 3;
@@ -429,7 +424,6 @@ const Game = {
         ctx.stroke();
         ctx.restore();
 
-        // Rehber Yörünge Halkaları
         ctx.save();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
         ctx.lineWidth = 1;
@@ -440,7 +434,6 @@ const Game = {
         }
         ctx.restore();
 
-        // Basılı Tutarken Görsel İtme Halkası
         if (this.isThrusting && this.state === 'PLAYING') {
             ctx.save();
             ctx.strokeStyle = skin.color;
@@ -452,7 +445,6 @@ const Game = {
             ctx.restore();
         }
 
-        // Merkez Kristal Çekirdek
         const coreR = this.minOrbit + Math.sin(this.corePulse) * 3;
         ctx.save();
         const grad = ctx.createRadialGradient(
