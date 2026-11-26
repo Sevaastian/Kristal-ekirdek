@@ -7,9 +7,14 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Masaüstü Arka Plan Efekti -->
     <div id="desktop-bg"></div>
+
+    <!-- Ana Oyun Konteyneri (9:16 Mobil Oranı) -->
     <div id="game-wrapper">
         <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD (Oyun İçi Arayüz) -->
         <div id="hud" class="ui-layer hidden">
             <div class="hud-top">
                 <div class="score-container">
@@ -22,7 +27,7 @@
                         <div id="combo-bar-fill"></div>
                     </div>
                 </div>
-                <button id="btn-pause" class="icon-btn" aria-label="Duraklat">
+                <button type="button" id="btn-pause" class="icon-btn" aria-label="Duraklat">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
                         <rect x="6" y="4" width="4" height="16" rx="1"/>
                         <rect x="14" y="4" width="4" height="16" rx="1"/>
@@ -33,13 +38,14 @@
             <div id="floating-text-container"></div>
         </div>
 
+        <!-- Ana Menü -->
         <div id="menu-screen" class="ui-layer active">
             <div class="menu-header">
                 <div class="currency-badge">
                     <span class="star-icon">✦</span>
                     <span id="menu-stardust">0</span>
                 </div>
-                <button id="btn-settings" class="icon-btn" aria-label="Ayarlar">
+                <button type="button" id="btn-settings" class="icon-btn" aria-label="Ayarlar">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -61,8 +67,8 @@
             </div>
 
             <div class="menu-actions">
-                <button id="btn-play" class="primary-btn pulse-anim">OYNA</button>
-                <button id="btn-shop" class="secondary-btn">KOLEKSİYON & TEMALAR</button>
+                <button type="button" id="btn-play" class="primary-btn pulse-anim">OYNA</button>
+                <button type="button" id="btn-shop" class="secondary-btn">KOLEKSİYON & TEMALAR</button>
             </div>
 
             <div class="tutorial-hint">
@@ -70,19 +76,22 @@
             </div>
         </div>
 
+        <!-- Duraklatma Ekranı -->
         <div id="pause-screen" class="ui-layer modal hidden">
             <div class="modal-content">
                 <h2>OYUN DURAKLATILDI</h2>
-                <button id="btn-resume" class="primary-btn">DEVAM ET</button>
-                <button id="btn-restart-pause" class="secondary-btn">YENİDEN BAŞLAT</button>
-                <button id="btn-quit" class="text-btn">ANA MENÜ</button>
+                <button type="button" id="btn-resume" class="primary-btn">DEVAM ET</button>
+                <button type="button" id="btn-restart-pause" class="secondary-btn">YENİDEN BAŞLAT</button>
+                <button type="button" id="btn-quit" class="text-btn">ANA MENÜ</button>
             </div>
         </div>
 
+        <!-- Oyun Sonu Ekranı -->
         <div id="gameover-screen" class="ui-layer modal hidden">
             <div class="modal-content">
                 <h2 id="gameover-title">ÇEKİRDEK ÇÖKTÜ</h2>
                 <div id="new-record-badge" class="hidden">YENİ REKOR!</div>
+                
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">SKOR</span>
@@ -93,15 +102,18 @@
                         <span id="final-best" class="stat-val">0</span>
                     </div>
                 </div>
+
                 <div class="reward-box">
                     <span>Kazanılan Yıldız Tozu:</span>
                     <span class="reward-val">+<span id="earned-stardust">0</span> ✦</span>
                 </div>
-                <button id="btn-replay" class="primary-btn">TEKRAR OYNA</button>
-                <button id="btn-home" class="secondary-btn">ANA MENÜ</button>
+
+                <button type="button" id="btn-replay" class="primary-btn">TEKRAR OYNA</button>
+                <button type="button" id="btn-home" class="secondary-btn">ANA MENÜ</button>
             </div>
         </div>
 
+        <!-- Koleksiyon / Mağaza Ekranı -->
         <div id="shop-screen" class="ui-layer modal hidden">
             <div class="modal-content shop-modal">
                 <div class="modal-header">
@@ -111,35 +123,42 @@
                         <span id="shop-stardust">0</span>
                     </div>
                 </div>
+                
                 <div class="shop-tabs">
-                    <button class="tab-btn active" data-tab="skins">KIVILCIMLAR</button>
-                    <button class="tab-btn" data-tab="themes">EVRENLER</button>
+                    <button type="button" class="tab-btn active" data-tab="skins">KIVILCIMLAR</button>
+                    <button type="button" class="tab-btn" data-tab="themes">EVRENLER</button>
                 </div>
-                <div id="shop-items-grid" class="items-grid"></div>
-                <button id="btn-close-shop" class="secondary-btn">GERİ DÖN</button>
+
+                <div id="shop-items-grid" class="items-grid">
+                    <!-- JS ile doldurulacak -->
+                </div>
+
+                <button type="button" id="btn-close-shop" class="secondary-btn">GERİ DÖN</button>
             </div>
         </div>
 
+        <!-- Ayarlar Ekranı -->
         <div id="settings-screen" class="ui-layer modal hidden">
             <div class="modal-content">
                 <h2>AYARLAR</h2>
                 <div class="setting-row">
                     <span>Ses Efektleri</span>
-                    <button id="toggle-sfx" class="toggle-btn active">AÇIK</button>
+                    <button type="button" id="toggle-sfx" class="toggle-btn active">AÇIK</button>
                 </div>
                 <div class="setting-row">
                     <span>Müzik & Atmosfer</span>
-                    <button id="toggle-music" class="toggle-btn active">AÇIK</button>
+                    <button type="button" id="toggle-music" class="toggle-btn active">AÇIK</button>
                 </div>
                 <div class="setting-row">
                     <span>Titreşim</span>
-                    <button id="toggle-vibrate" class="toggle-btn active">AÇIK</button>
+                    <button type="button" id="toggle-vibrate" class="toggle-btn active">AÇIK</button>
                 </div>
-                <button id="btn-close-settings" class="primary-btn">TAMAM</button>
+                <button type="button" id="btn-close-settings" class="primary-btn">TAMAM</button>
             </div>
         </div>
     </div>
 
+    <!-- Sıralı Klasik Script Yüklemeleri (Sunucu gerektirmez) -->
     <script src="js/storage.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/particles.js"></script>
