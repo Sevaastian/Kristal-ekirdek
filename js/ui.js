@@ -1,8 +1,14 @@
 const UIManager = {
-    currentShopTab: 'skins',
+    currentShopTab: 'skins', selectedGalaxy: 0, selectedLevel: 1,
     init(gameCallbacks) { this.callbacks = gameCallbacks; this.bindEvents(); this.refreshMenu(); },
     bindEvents() {
-        document.getElementById('btn-play').addEventListener('click', () => { AudioEngine.init(); this.callbacks.startGame(); });
+        document.getElementById('btn-play').addEventListener('click', () => { AudioEngine.init(); this.callbacks.startGame(StorageManager.state.currentLevel); });
+        document.getElementById('btn-levels').addEventListener('click', () => this.openLevelMap());
+        document.getElementById('btn-close-levels').addEventListener('click', () => { this.hideModal('levels-screen'); this.refreshMenu(); });
+        document.getElementById('btn-start-selected').addEventListener('click', () => { if (this.selectedLevel <= StorageManager.state.unlockedLevel) { this.hideModal('levels-screen'); this.callbacks.startGame(this.selectedLevel); } });
+        document.getElementById('btn-result-next').addEventListener('click', () => { this.hideModal('level-result-screen'); this.callbacks.startGame(Math.min(GameData.MAX_LEVEL, this.resultLevel + 1)); });
+        document.getElementById('btn-result-replay').addEventListener('click', () => { this.hideModal('level-result-screen'); this.callbacks.startGame(this.resultLevel); });
+        document.getElementById('btn-result-map').addEventListener('click', () => { this.hideModal('level-result-screen'); this.openLevelMap(); });
         document.getElementById('btn-pause').addEventListener('click', (e) => { e.stopPropagation(); this.callbacks.pauseGame(); });
         document.getElementById('btn-resume').addEventListener('click', () => this.callbacks.resumeGame());
         document.getElementById('btn-restart-pause').addEventListener('click', () => this.callbacks.startGame());
@@ -30,7 +36,7 @@ const UIManager = {
     },
     showModal(id) { const el = document.getElementById(id); el.classList.remove('hidden'); el.classList.add('active'); },
     hideModal(id) { const el = document.getElementById(id); el.classList.add('hidden'); el.classList.remove('active'); },
-    hideAllModals() { ['pause-screen', 'gameover-screen', 'shop-screen', 'settings-screen'].forEach(m => this.hideModal(m)); },
+    hideAllModals() { ['pause-screen', 'gameover-screen', 'shop-screen', 'settings-screen', 'levels-screen', 'level-result-screen'].forEach(m => this.hideModal(m)); },
     refreshMenu() {
         const lvl = StorageManager.state.currentLevel;
         document.getElementById('menu-current-level').textContent = lvl;
@@ -41,6 +47,46 @@ const UIManager = {
         const prog = Math.min(StorageManager.state.missionProgress, mission.target);
         document.getElementById('mission-desc').textContent = `${mission.text.replace('{target}', mission.target)} (${prog}/${mission.target}) • +${mission.reward}✦`;
         document.getElementById('mission-progress-fill').style.width = `${(prog / mission.target) * 100}%`;
+    },
+    openLevelMap() {
+        this.selectedGalaxy = Math.min(9, Math.floor((StorageManager.state.unlockedLevel - 1) / 11));
+        this.selectedLevel = Math.min(StorageManager.state.unlockedLevel, GameData.MAX_LEVEL);
+        this.renderLevelMap(); this.showModal('levels-screen');
+    },
+    renderLevelMap() {
+        const tabs = document.getElementById('galaxy-tabs'); tabs.innerHTML = '';
+        const completed = Object.values(StorageManager.state.levelProgress || {}).filter(x => x.completed).length;
+        document.getElementById('map-total').textContent = `${StorageManager.state.totalStars || 0} / ${GameData.MAX_LEVEL * 3} ✦`;
+        document.getElementById('map-stats').textContent = `${completed} / ${GameData.MAX_LEVEL} bölüm • ${StorageManager.state.bossWins.length} boss • ${Math.round(completed / GameData.MAX_LEVEL * 100)}% ilerleme`;
+        GameData.GALAXIES.forEach((g, i) => {
+          const b = document.createElement('button'); b.className = `galaxy-tab ${i === this.selectedGalaxy ? 'active' : ''}`; b.textContent = `${i+1}. ${g.name}`;
+          b.style.setProperty('--accent', g.color); b.addEventListener('click', () => { this.selectedGalaxy = i; this.renderLevelMap(); }); tabs.appendChild(b);
+        });
+        const grid = document.getElementById('level-grid'); grid.innerHTML = '';
+        const first = this.selectedGalaxy * 11 + 1;
+        for (let n = first; n < first + 11 && n <= GameData.MAX_LEVEL; n++) {
+          const cfg = StorageManager.getLevelConfig(n), rec = StorageManager.getLevelRecord(n), locked = n > StorageManager.state.unlockedLevel;
+          const b = document.createElement('button'); b.className = `level-node ${locked?'locked':''} ${rec.completed?'done':''} ${cfg.isBoss?'boss':''} ${n===this.selectedLevel?'selected':''}`;
+          b.innerHTML = `<span>${cfg.isBoss?'BOSS':n}</span><small>${'★'.repeat(rec.stars||0)}${'☆'.repeat(3-(rec.stars||0))}</small>`;
+          b.disabled = locked; b.addEventListener('click', () => { this.selectedLevel=n; this.renderLevelMap(); }); grid.appendChild(b);
+        }
+        const cfg = StorageManager.getLevelConfig(this.selectedLevel), rec = StorageManager.getLevelRecord(this.selectedLevel);
+        const locked = this.selectedLevel > StorageManager.state.unlockedLevel;
+        document.getElementById('selected-level-info').innerHTML = `<strong style="color:${cfg.accent}">${cfg.name}</strong><br>${cfg.galaxyName} • ${cfg.isBoss?'Boss karşılaşması':'Bölüm'} • Hedef: ${cfg.targetCrystals} kristal<br>${rec.completed?`En iyi: ${'★'.repeat(rec.stars)}${'☆'.repeat(3-rec.stars)} • Rekor ${rec.bestScore}`:'Henüz tamamlanmadı'} • Mekanikler: ${cfg.mechanics.join(', ')}`;
+        const start = document.getElementById('btn-start-selected'); start.disabled = locked; start.textContent = locked ? 'BÖLÜM KİLİTLİ' : `${this.selectedLevel}. BÖLÜMÜ OYNA`;
+      },
+    showLevelResult(data) {
+        this.resultLevel = data.level;
+        document.getElementById('result-title').textContent = data.name;
+        document.getElementById('result-stars').innerHTML = `${'★'.repeat(data.stars)}<span class="empty">${'★'.repeat(3-data.stars)}</span>`;
+        document.getElementById('result-subtitle').textContent = data.isBoss ? 'Boss yenildi! Yeni galaksiye giden yol açıldı.' : 'Bölüm tamamlandı. Sonraki bölümün kilidi açıldı.';
+        document.getElementById('result-score').textContent = data.score;
+        document.getElementById('result-crystals').textContent = data.crystals;
+        document.getElementById('result-damage').textContent = data.damage;
+        document.getElementById('result-time').textContent = `${data.time.toFixed(1)}s`;
+        document.getElementById('result-criteria').textContent = data.criteria;
+        document.getElementById('btn-result-next').disabled = data.level >= GameData.MAX_LEVEL;
+        this.showModal('level-result-screen');
     },
     updateLevelHUD(level, collected, target, shields) {
         document.getElementById('hud-level').textContent = level;

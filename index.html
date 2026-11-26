@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Kristal Çekirdek - 200 Level</title>
+    <title>Kristal Çekirdek - 110 Bölüm</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -20,7 +20,7 @@
                 </div>
 
                 <div class="level-hud-box">
-                    <div class="level-hud-title">BÖLÜM <span id="hud-level">1</span>/200</div>
+                    <div class="level-hud-title">BÖLÜM <span id="hud-level">1</span>/110</div>
                     <div class="level-progress-bg">
                         <div id="level-progress-fill"></div>
                     </div>
@@ -69,7 +69,7 @@
             </div>
 
             <div class="title-area">
-                <div class="level-pill-menu">BÖLÜM <span id="menu-current-level">1</span> / 200</div>
+                <div class="level-pill-menu">BÖLÜM <span id="menu-current-level">1</span> / 110</div>
                 <h1 class="game-title">KRİSTAL<br><span>ÇEKİRDEK</span></h1>
                 <p class="best-score-display">EN YÜKSEK SKOR: <span id="menu-best-score">0</span></p>
             </div>
@@ -84,6 +84,7 @@
 
             <div class="menu-actions">
                 <button type="button" id="btn-play" class="primary-btn pulse-anim">BÖLÜM <span id="btn-play-lvl">1</span> OYNA</button>
+                <button type="button" id="btn-levels" class="secondary-btn">BÖLÜM HARİTASI</button>
                 <button type="button" id="btn-shop" class="secondary-btn">KOLEKSİYON & EVRENLER</button>
             </div>
 
@@ -106,7 +107,7 @@
         <div id="gameover-screen" class="ui-layer modal hidden">
             <div class="modal-content">
                 <h2 id="gameover-title">KALKANLAR TÜKENDİ</h2>
-                <p class="gameover-sub">Ulaşılan Bölüm: <strong id="final-level">1</strong> / 200</p>
+                <p class="gameover-sub">Ulaşılan Bölüm: <strong id="final-level">1</strong> / 110</p>
                 <div id="new-record-badge" class="hidden">YENİ REKOR!</div>
                 <div class="stats-grid">
                     <div class="stat-box">
@@ -125,6 +126,36 @@
                 <button type="button" id="btn-replay" class="primary-btn">TEKRAR DENE</button>
                 <button type="button" id="btn-home" class="secondary-btn">ANA MENÜ</button>
             </div>
+        </div>
+
+
+        <div id="levels-screen" class="ui-layer modal hidden">
+          <div class="modal-content levels-modal">
+            <div class="modal-header"><h2>GALAKSİ HARİTASI</h2><span class="map-total" id="map-total">0 / 330 ✦</span></div>
+            <div class="map-stats" id="map-stats"></div>
+            <div id="galaxy-tabs" class="galaxy-tabs"></div>
+            <div id="level-grid" class="level-grid"></div>
+            <div id="selected-level-info" class="selected-level-info">Bir bölüm seç.</div>
+            <button type="button" id="btn-start-selected" class="primary-btn" disabled>SEÇİLİ BÖLÜMÜ OYNA</button>
+            <button type="button" id="btn-close-levels" class="secondary-btn">ANA MENÜ</button>
+          </div>
+        </div>
+        <div id="level-result-screen" class="ui-layer modal hidden">
+          <div class="modal-content result-modal">
+            <div class="result-kicker">GÖREV TAMAMLANDI</div><h2 id="result-title">İLK IŞIK</h2>
+            <div id="result-stars" class="result-stars">★★★</div>
+            <p id="result-subtitle">Galaksi ilerlemesi kaydedildi.</p>
+            <div class="stats-grid">
+              <div class="stat-box"><span class="stat-label">SKOR</span><span id="result-score" class="stat-val">0</span></div>
+              <div class="stat-box"><span class="stat-label">KRİSTALLER</span><span id="result-crystals" class="stat-val">0</span></div>
+              <div class="stat-box"><span class="stat-label">HASAR</span><span id="result-damage" class="stat-val">0</span></div>
+              <div class="stat-box"><span class="stat-label">SÜRE</span><span id="result-time" class="stat-val">0s</span></div>
+            </div>
+            <p id="result-criteria" class="result-criteria"></p>
+            <button type="button" id="btn-result-next" class="primary-btn">SONRAKİ BÖLÜM</button>
+            <button type="button" id="btn-result-replay" class="secondary-btn">TEKRAR OYNA</button>
+            <button type="button" id="btn-result-map" class="text-btn">BÖLÜM HARİTASI</button>
+          </div>
         </div>
 
         <!-- Koleksiyon -->

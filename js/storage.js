@@ -1,5 +1,12 @@
 const GameData = {
-    MAX_LEVEL: 200,
+    MAX_LEVEL: 110,
+    GALAXIES: [
+      {name:"Kristal Başlangıç",color:"#00f2fe",bg:"#070913"},{name:"Kızıl Nebula",color:"#ff5b68",bg:"#16070d"},
+      {name:"Donmuş Yörünge",color:"#8be9ff",bg:"#06131d"},{name:"Elektrik Fırtınası",color:"#ffe066",bg:"#151007"},
+      {name:"Karanlık Boyut",color:"#b58cff",bg:"#10091c"},{name:"Kuantum Labirenti",color:"#72ffc8",bg:"#061711"},
+      {name:"Zamanın Çatlağı",color:"#ff9ee8",bg:"#190817"},{name:"Çürüyen Yıldızlar",color:"#ff9b55",bg:"#1a0d06"},
+      {name:"Sonsuz Boşluk",color:"#a6b2ff",bg:"#080b1c"},{name:"Son Çekirdek",color:"#ffffff",bg:"#090909"}
+    ],
     SKINS: [
         { id: 'sapphire', name: 'Safir Kıvılcım', color: '#00f2fe', trail: '#4facfe', price: 0 },
         { id: 'solar', name: 'Güneş Patlaması', color: '#ffd700', trail: '#ff6b00', price: 50 },
@@ -27,6 +34,10 @@ const StorageManager = {
     init() {
         const defaultState = {
             currentLevel: 1,
+            unlockedLevel: 1,
+            levelProgress: {},
+            totalStars: 0,
+            bossWins: [],
             bestScore: 0,
             stardust: 0,
             unlockedSkins: ['sapphire'],
@@ -44,6 +55,13 @@ const StorageManager = {
                 const parsed = JSON.parse(raw);
                 this.state = Object.assign({}, defaultState, parsed);
                 this.state.settings = Object.assign({}, defaultState.settings, parsed.settings || {});
+                this.state.levelProgress = parsed.levelProgress || {};
+                this.state.unlockedLevel = Math.max(1, parsed.unlockedLevel || parsed.currentLevel || 1);
+                this.state.totalStars = parsed.totalStars || 0;
+                this.state.bossWins = parsed.bossWins || [];
+                this.state.unlockedLevel = Math.min(GameData.MAX_LEVEL, this.state.unlockedLevel);
+                this.state.currentLevel = Math.min(GameData.MAX_LEVEL, parsed.currentLevel || this.state.unlockedLevel);
+                this.state.totalStars = Object.values(this.state.levelProgress).reduce((sum, r) => sum + (r.stars || 0), 0);
             } else {
                 this.state = defaultState;
             }
@@ -59,16 +77,44 @@ const StorageManager = {
 
     getLevelConfig(level) {
         const lvl = Math.max(1, Math.min(GameData.MAX_LEVEL, level));
+        const isBoss = lvl % 11 === 0;
+        const galaxyIndex = Math.min(9, Math.floor((lvl - 1) / 11));
+        const localLevel = isBoss ? 11 : ((lvl - 1) % 11) + 1;
+        const mechanicPool = [
+          ['moving'], ['laser'], ['narrow'], ['gravity'], ['fake'],
+          ['dark'], ['radial'], ['moving','laser'], ['gravity','radial'], ['survival']
+        ];
+        const mechanics = isBoss ? ['boss','radial','moving'] : mechanicPool[(localLevel - 1) % mechanicPool.length];
+        const galaxy = GameData.GALAXIES[galaxyIndex];
         return {
-            level: lvl,
-            targetCrystals: Math.min(25, 3 + Math.floor((lvl - 1) * 0.45)),
-            obstacleCount: Math.min(9, 1 + Math.floor(lvl / 4)),
-            speedMult: 0.72 + Math.min(1.1, (lvl - 1) * 0.008),
-            movingObstacles: lvl >= 4,
-            radialObstacles: lvl >= 10,
-            rewardStardust: 10 + Math.floor(lvl * 1.5)
+          level: lvl, galaxyIndex, galaxyName: galaxy.name, accent: galaxy.color, background: galaxy.bg,
+          name: isBoss ? `${galaxy.name}: ÇEKİRDEK MUHAFIZI` : this.levelName(localLevel, galaxyIndex),
+          isBoss, type: isBoss ? 'boss' : (mechanics[0] === 'survival' ? 'survival' : 'standard'),
+          targetCrystals: isBoss ? 8 + galaxyIndex * 2 : Math.min(18, 3 + Math.floor((localLevel - 1) * 0.8) + galaxyIndex),
+          obstacleCount: isBoss ? 5 + galaxyIndex : Math.min(8, 1 + localLevel + Math.floor(galaxyIndex / 2)),
+          speedMult: 0.72 + galaxyIndex * 0.08 + localLevel * 0.018,
+          movingObstacles: mechanics.includes('moving') || isBoss,
+          radialObstacles: mechanics.includes('radial') || mechanics.includes('gravity') || isBoss,
+          mechanics, duration: mechanics.includes('survival') ? 32 + galaxyIndex * 3 : 0,
+          rewardStardust: 10 + lvl * 2, star2: 0.65, star3: 0.9
         };
     },
+    levelName(n, galaxy) {
+      const names = ['İlk Işık','Hareketli Gölgeler','Dar Yörünge','Lazer Dansı','Son Saniye','Ters Yerçekimi','Sahte Işıklar','Karanlık Kuşak','Çift Yörünge','Fırtına Kapısı'];
+      return names[(n - 1) % names.length];
+    },
+    getLevelRecord(level) { return this.state.levelProgress[level] || { completed:false, stars:0, bestScore:0, bestTime:null }; },
+    recordLevel(level, stars, score, time, isBoss) {
+      const old = this.getLevelRecord(level);
+      const bestStars = Math.max(old.stars || 0, stars);
+      this.state.levelProgress[level] = { completed:true, stars:bestStars, bestScore:Math.max(old.bestScore || 0, score), bestTime:old.bestTime == null ? time : Math.min(old.bestTime, time) };
+      this.state.unlockedLevel = Math.max(this.state.unlockedLevel || 1, Math.min(GameData.MAX_LEVEL, level + 1));
+      this.state.currentLevel = this.state.unlockedLevel;
+      this.state.totalStars = Object.values(this.state.levelProgress).reduce((sum, r) => sum + (r.stars || 0), 0);
+      if (isBoss && !this.state.bossWins.includes(level)) this.state.bossWins.push(level);
+      this.save();
+    },
+    getLevelCount() { return GameData.MAX_LEVEL; },
 
     getActiveSkin() { return GameData.SKINS.find(s => s.id === this.state.selectedSkin) || GameData.SKINS[0]; },
     getActiveTheme() { return GameData.THEMES.find(t => t.id === this.state.selectedTheme) || GameData.THEMES[0]; },

@@ -1,11 +1,26 @@
-# KRİSTAL ÇEKİRDEK (Crystal Core)
+# Kristal Çekirdek
 
-Merkezdeki enerji çekirdeğinin yerçekimini tersine çevirerek karanlık maddelerden kaçtığınız ve ışık kristallerini topladığınız, tek parmakla oynanan hızlı tempolu kozmik arcade oyunu.
+Canvas tabanlı, mobil ve masaüstü uyumlu kozmik arcade oyunu.
 
-## Nasıl Çalıştırılır?
-1. Tüm dosyaları belirtilen klasör yapısıyla cihazınıza kaydedin.
-2. Herhangi bir yerel sunucuya veya internet bağlantısına ihtiyaç duymadan **`index.html`** dosyasını modern bir tarayıcıda açın.
+## Çalıştırma
+
+`index.html` dosyasını modern bir tarayıcıda açın. Herhangi bir build adımı veya paket kurulumu gerekmez.
+
+## Güncel oyun sistemleri
+
+- 10 galaksi boyunca 100 normal bölüm + 10 boss karşılaşması (110 bölüm).
+- Galaksi temaları, bölüm adları ve bölüm bazlı mekanik kombinasyonları.
+- Galaksi haritası üzerinden erişilebilir bölümleri seçme ve tekrar oynama.
+- Bölüm tamamlama, en iyi yıldız derecesi, skor ve süre kayıtları.
+- 1 yıldızla bölüm geçişi; sonraki bölümün kilidini açma.
+- 1–3 yıldızlı performans değerlendirmesi ve bölüm sonuç ekranı.
+- Kalıcı ilerleme için localStorage kayıtları ve eski kayıtlarla temel uyumluluk.
+- Hareketli engel, lazer ritmi, dar yörünge, ters yerçekimi, karanlık alan ve hayatta kalma varyasyonları.
 
 ## Kontroller
-- **Mobil / Dokunmatik:** Ekrana dokunup basılı tutarak çekirdeğin yerçekimini tersine çevirin (dış yörüngelere açılın). Parmağınızı bırakarak çekirdeğe doğru çekilin.
-- **Bilgisayar (PC):** **Sol Fare Tuşu** veya **Boşluk (Space) / Yukarı Ok / W** tuşlarına basılı tutarak dışa açılın, bırakarak içe çekilin. Duraklatmak için **ESC** veya **P** tuşunu kullanın.
+
+- Basılı tut / Space / W / Yukarı ok: dış yörüngeye açıl.
+- Bırak: iç yörüngeye çekil.
+- P veya Escape: duraklat / devam et.
+
+Kayıtlar tarayıcıdaki localStorage alanında saklanır.

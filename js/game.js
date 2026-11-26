@@ -4,7 +4,7 @@ const Game = {
     hitStopTimer: 0, shakeTime: 0, shakeIntensity: 0,
     isThrusting: false, graceTimer: 0, score: 0, combo: 1, comboCharge: 0,
     sessionCrystals: 0, corePulse: 0,
-    currentLevel: 1, levelCrystals: 0, levelConfig: null, shields: 2,
+    currentLevel: 1, levelCrystals: 0, levelConfig: null, shields: 2, levelElapsed: 0, damageTaken: 0, levelNearMisses: 0,
     player: null, particles: null, crystals: [], obstacles: [], bgStars: [],
 
     init() {
@@ -14,7 +14,7 @@ const Game = {
         this.resize(); window.addEventListener('resize', () => this.resize());
         document.addEventListener('visibilitychange', () => { if (document.hidden && this.state === 'PLAYING') this.pauseGame(); });
         this.initInput();
-        UIManager.init({ startGame: () => this.startGame(), pauseGame: () => this.pauseGame(), resumeGame: () => this.resumeGame(), quitToMenu: () => this.quitToMenu() });
+        UIManager.init({ startGame: (level) => this.startGame(level), pauseGame: () => this.pauseGame(), resumeGame: () => this.resumeGame(), quitToMenu: () => this.quitToMenu() });
         this.createBgStars(); requestAnimationFrame((t) => this.loop(t));
     },
     resize() {
@@ -48,17 +48,17 @@ const Game = {
         });
         window.addEventListener('keyup', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') this.isThrusting = false; });
     },
-    startGame() {
+    startGame(level = StorageManager.state.currentLevel) {
         UIManager.hideAllModals(); UIManager.showScreen('hud');
         this.state = 'PLAYING'; this.score = 0; this.combo = 1; this.comboCharge = 0; this.sessionCrystals = 0;
         this.isThrusting = false; this.hitStopTimer = 0; this.shakeTime = 0;
         this.particles.clear(); this.player.reset(this.minOrbit, this.maxOrbit);
-        this.setupLevel(StorageManager.state.currentLevel, true);
+        this.setupLevel(level, true);
     },
     setupLevel(levelNum, resetShields = false) {
         this.currentLevel = Math.min(GameData.MAX_LEVEL, levelNum);
         this.levelConfig = StorageManager.getLevelConfig(this.currentLevel);
-        this.levelCrystals = 0; this.graceTimer = 0.7;
+        this.levelCrystals = 0; this.graceTimer = 0.7; this.levelElapsed = 0; this.damageTaken = 0; this.levelNearMisses = 0;
         if (resetShields) this.shields = 2;
         this.crystals = []; this.obstacles = [];
         this.spawnCrystalRing(Math.min(4, this.levelConfig.targetCrystals));
@@ -66,23 +66,29 @@ const Game = {
         const skin = StorageManager.getActiveSkin();
         this.particles.spawnShockwave(this.centerX, this.centerY, skin.color, this.maxOrbit);
         UIManager.updateLevelHUD(this.currentLevel, this.levelCrystals, this.levelConfig.targetCrystals, this.shields);
+        if (this.levelConfig.mechanics.includes('survival') && this.levelElapsed >= this.levelConfig.duration) { this.completeLevel(); return; }
         UIManager.updateHUD(this.score, this.combo, this.comboCharge, this.player.isSupernova);
     },
     completeLevel() {
+        const cfg = this.levelConfig;
         const completedLvl = this.currentLevel;
-        const reward = this.levelConfig.rewardStardust;
-        StorageManager.state.stardust += reward;
+        const clean = this.damageTaken === 0;
+        const ratio = this.score / Math.max(1, cfg.targetCrystals * 35);
+        let stars = 1;
+        if (ratio >= 0.75 || (this.levelNearMisses >= 3 && clean)) stars = 2;
+        if ((ratio >= 1.15 && clean) || (cfg.isBoss && this.damageTaken === 0 && this.levelNearMisses >= 2)) stars = 3;
+        if (cfg.mechanics.includes('survival') && this.levelElapsed >= cfg.duration) stars = Math.max(stars, this.damageTaken === 0 ? 3 : 2);
+        const reward = cfg.rewardStardust + stars * 5;
         this.score += completedLvl * 50;
-        if (this.currentLevel < GameData.MAX_LEVEL) StorageManager.state.currentLevel = this.currentLevel + 1;
-        StorageManager.save();
+        StorageManager.state.stardust += reward;
+        StorageManager.recordLevel(completedLvl, stars, this.score, this.levelElapsed, cfg.isBoss);
+        StorageManager.updateMissionProgress('score', this.score);
         AudioEngine.playLevelUp(); StorageManager.vibrate([25, 30, 50]);
         this.triggerShake(0.25, 8);
         this.particles.spawn(this.centerX, this.centerY, '#00ff87', 40, 280, 5);
         this.particles.spawnShockwave(this.centerX, this.centerY, '#00ff87', this.maxOrbit * 1.25);
-        UIManager.showLevelUpBanner(completedLvl);
-        UIManager.spawnFloatingText(this.centerX, this.centerY - 40, `+${reward} ✦ BÖLÜM ÖDÜLÜ`, '#00ff87');
-        this.shields = Math.min(2, this.shields + 1);
-        this.setupLevel(StorageManager.state.currentLevel, false);
+        this.state = 'LEVEL_COMPLETE'; this.isThrusting = false;
+        UIManager.showLevelResult({level:completedLvl,name:cfg.name,stars,score:this.score,crystals:this.levelCrystals,damage:this.damageTaken,time:this.levelElapsed,isBoss:cfg.isBoss,criteria:`${stars===3?'Mükemmel performans!':stars===2?'İyi iş! Bir yıldız daha kazanmak için hasarı azalt veya skorunu yükselt.':'Bölümü tamamladın! Daha fazla yıldız için hasar almadan ve daha yüksek skorla bitirmeyi dene.'} • Kıl payı geçiş: ${this.levelNearMisses}`});
     },
     pauseGame() { if (this.state === 'PLAYING') { this.state = 'PAUSED'; this.isThrusting = false; UIManager.showModal('pause-screen'); } },
     resumeGame() { if (this.state === 'PAUSED') { UIManager.hideModal('pause-screen'); this.state = 'PLAYING'; this.lastTime = performance.now(); } },
@@ -98,11 +104,19 @@ const Game = {
     spawnWaveForLevel() {
         const count = this.levelConfig.obstacleCount;
         const baseAngle = this.player.angle + Math.PI * 0.75;
+        const bossPhase = this.levelConfig.isBoss ? Math.min(2, Math.floor(this.levelCrystals / Math.max(1, this.levelConfig.targetCrystals / 3))) : 0;
         for (let i = 0; i < count; i++) {
-            const angle = baseAngle + (i * (Math.PI * 1.35)) / count + (Math.random() - 0.5) * 0.25;
-            const orbit = this.minOrbit + 25 + Math.random() * (this.maxOrbit - this.minOrbit - 50);
-            const angVel = this.levelConfig.movingObstacles ? (Math.random() - 0.5) * 0.9 : 0;
-            const radVel = this.levelConfig.radialObstacles && Math.random() > 0.5 ? (Math.random() > 0.5 ? 28 : -28) : 0;
+            let angle = baseAngle + (i * (Math.PI * 1.35)) / count + (Math.random() - 0.5) * 0.25;
+            let orbit = this.minOrbit + 25 + Math.random() * (this.maxOrbit - this.minOrbit - 50);
+            let angVel = this.levelConfig.movingObstacles ? (Math.random() - 0.5) * 0.9 : 0;
+            let radVel = this.levelConfig.radialObstacles && Math.random() > 0.5 ? (Math.random() > 0.5 ? 28 : -28) : 0;
+            if (this.levelConfig.isBoss) {
+                // Boss phases: sweeping orbit, inward/outward pincer, then faster rotating ring.
+                angle = baseAngle + i * (Math.PI * 2 / count) + bossPhase * 0.18;
+                orbit = bossPhase === 1 ? this.minOrbit + 34 + (i % 2) * (this.maxOrbit - this.minOrbit - 68) : this.minOrbit + 30 + Math.random() * (this.maxOrbit - this.minOrbit - 60);
+                angVel = bossPhase === 2 ? (i % 2 ? -1.25 : 1.25) : (i % 2 ? -0.72 : 0.72);
+                radVel = bossPhase === 1 ? (i % 2 ? 42 : -42) : 0;
+            }
             this.obstacles.push(new DarkObstacle(angle, orbit, angVel, radVel));
         }
     },
@@ -131,6 +145,8 @@ const Game = {
         }
         if (this.hitStopTimer > 0) { this.hitStopTimer -= dt; return; }
         const difficulty = this.levelConfig.speedMult;
+        this.levelElapsed += dt;
+        if (this.levelConfig.mechanics.includes('gravity') && Math.floor(this.levelElapsed / 5) % 2 === 1) this.player.radialVelocity += (this.isThrusting ? -1 : 1) * 34 * dt;
         if (this.player.isSupernova) this.comboCharge = Math.max(0, this.player.supernovaTimer / 5.0);
         else this.comboCharge = Math.max(0, this.comboCharge - 0.05 * dt);
         if (this.graceTimer > 0 && !this.isThrusting) {
@@ -145,6 +161,7 @@ const Game = {
         } else {
             this.player.update(dt, this.isThrusting, this.centerX, this.centerY, difficulty);
         }
+        if (this.levelConfig.mechanics.includes('narrow')) { this.player.orbitRadius = Math.max(this.minOrbit + 8, Math.min(this.maxOrbit - 28, this.player.orbitRadius)); }
         if (this.player.orbitRadius <= this.minOrbit + 4) {
             this.player.orbitRadius = this.minOrbit + 5; this.player.radialVelocity = Math.abs(this.player.radialVelocity) * 0.65 + 90;
             AudioEngine.playBounce(); this.particles.spawn(this.player.x, this.player.y, '#00f2fe', 8, 120, 3);
@@ -179,6 +196,8 @@ const Game = {
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obs = this.obstacles[i]; obs.update(dt, this.centerX, this.centerY, this.minOrbit, this.maxOrbit);
             const dist = Math.hypot(this.player.x - obs.x, this.player.y - obs.y);
+            if (this.levelConfig.mechanics.includes('laser')) obs.radius = 13 + Math.sin(this.levelElapsed * 4 + i) * 4;
+            if (this.levelConfig.mechanics.includes('dark')) obs.alpha = 0.75;
             const hitDist = this.player.baseRadius + obs.radius - 4;
             if (dist < hitDist) {
                 if (this.player.isSupernova) {
@@ -187,7 +206,7 @@ const Game = {
                     this.particles.spawn(obs.x, obs.y, theme.danger, 22, 260, 5);
                     UIManager.spawnFloatingText(obs.x, obs.y, `PARÇALANDI +${bonus}`, '#ff6b00'); continue;
                 } else if (this.player.invulnTimer <= 0) {
-                    this.obstacles.splice(i, 1); this.shields--; this.combo = 1;
+                    this.obstacles.splice(i, 1); this.shields--; this.damageTaken++; this.combo = 1;
                     UIManager.updateLevelHUD(this.currentLevel, this.levelCrystals, this.levelConfig.targetCrystals, this.shields);
                     if (this.shields > 0) {
                         this.player.invulnTimer = 1.6; AudioEngine.playShieldBreak(); StorageManager.vibrate([40, 30, 40]);
@@ -196,20 +215,21 @@ const Game = {
                     } else { this.gameOver(); return; }
                 }
             } else if (!obs.nearMissed && dist < hitDist + 22) {
-                obs.nearMissed = true; const bonus = 15 * this.combo; this.score += bonus;
+                obs.nearMissed = true; this.levelNearMisses++; const bonus = 15 * this.combo; this.score += bonus;
                 this.comboCharge = Math.min(1, this.comboCharge + 0.15); AudioEngine.playNearMiss(); StorageManager.vibrate(10);
                 UIManager.spawnFloatingText(this.player.x, this.player.y - 18, `KIL PAYI +${bonus}`, '#f093fb');
                 StorageManager.updateMissionProgress('nearmiss', 1);
             }
         }
         if (this.obstacles.length === 0) this.spawnWaveForLevel();
+        if (this.levelConfig.mechanics.includes('survival') && this.levelElapsed >= this.levelConfig.duration) { this.completeLevel(); return; }
         UIManager.updateHUD(this.score, this.combo, this.comboCharge, this.player.isSupernova);
     },
     draw() {
         const ctx = this.ctx; const theme = StorageManager.getActiveTheme(); const skin = StorageManager.getActiveSkin();
         ctx.save();
         if (this.shakeTime > 0) ctx.translate((Math.random() - 0.5) * this.shakeIntensity, (Math.random() - 0.5) * this.shakeIntensity);
-        ctx.fillStyle = theme.bg; ctx.fillRect(0, 0, this.width, this.height);
+        ctx.fillStyle = this.levelConfig && this.state === 'PLAYING' ? this.levelConfig.background : theme.bg; ctx.fillRect(0, 0, this.width, this.height);
         ctx.fillStyle = '#ffffff';
         for (let s of this.bgStars) { ctx.globalAlpha = s.alpha; ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill(); }
         ctx.globalAlpha = 1;
@@ -229,10 +249,13 @@ const Game = {
         ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(this.centerX, this.centerY, coreR * 1.4, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.globalAlpha = 0.7;
         ctx.beginPath(); ctx.arc(this.centerX, this.centerY, coreR * 0.65, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+        if (this.levelConfig && this.levelConfig.isBoss && this.state === 'PLAYING') { ctx.save(); const phase=Math.min(2,Math.floor(this.levelCrystals/Math.max(1,this.levelConfig.targetCrystals/3))); ctx.strokeStyle=this.levelConfig.accent; ctx.lineWidth=3; ctx.globalAlpha=0.75; ctx.setLineDash([5+phase*3,5]); ctx.beginPath(); ctx.arc(this.centerX,this.centerY,coreR*1.8+Math.sin(this.corePulse*2)*4,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle='#fff'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center'; ctx.fillText(`ÇEKİRDEK MUHAFIZI • AŞAMA ${phase+1}`,this.centerX,this.centerY+coreR*2.25); ctx.restore(); }
         for (let c of this.crystals) c.draw(ctx);
         for (let obs of this.obstacles) obs.draw(ctx, theme.danger);
         if (this.state !== 'GAMEOVER') this.player.draw(ctx, skin);
-        this.particles.draw(ctx); ctx.restore();
+        this.particles.draw(ctx);
+        if (this.state === 'PLAYING' && this.levelConfig && this.levelConfig.mechanics.includes('dark')) { const v=ctx.createRadialGradient(this.player.x,this.player.y,55,this.player.x,this.player.y,Math.max(this.width,this.height)*0.62); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,0.88)'); ctx.fillStyle=v; ctx.fillRect(0,0,this.width,this.height); }
+        ctx.restore();
     },
     loop(timestamp) {
         if (!this.lastTime) this.lastTime = timestamp;
