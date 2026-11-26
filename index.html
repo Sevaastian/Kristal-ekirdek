@@ -3,38 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Kristal Çekirdek</title>
+    <title>Kristal Çekirdek - 200 Level</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Masaüstü Arka Plan Efekti -->
     <div id="desktop-bg"></div>
-
-    <!-- Ana Oyun Konteyneri (9:16 Mobil Oranı) -->
     <div id="game-wrapper">
         <canvas id="gameCanvas"></canvas>
 
-        <!-- HUD (Oyun İçi Arayüz) -->
+        <!-- HUD -->
         <div id="hud" class="ui-layer hidden">
             <div class="hud-top">
                 <div class="score-container">
                     <span id="score-label">SKOR</span>
                     <span id="score-value">0</span>
                 </div>
-                <div class="combo-container">
-                    <span id="combo-value">x1</span>
-                    <div class="combo-bar-bg">
-                        <div id="combo-bar-fill"></div>
+
+                <div class="level-hud-box">
+                    <div class="level-hud-title">BÖLÜM <span id="hud-level">1</span>/200</div>
+                    <div class="level-progress-bg">
+                        <div id="level-progress-fill"></div>
                     </div>
+                    <div class="level-target-text" id="hud-level-target">0 / 3 Kristal</div>
                 </div>
-                <button type="button" id="btn-pause" class="icon-btn" aria-label="Duraklat">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                        <rect x="6" y="4" width="4" height="16" rx="1"/>
-                        <rect x="14" y="4" width="4" height="16" rx="1"/>
-                    </svg>
-                </button>
+
+                <div class="hud-right-group">
+                    <div id="shields-container" class="shields-box" title="Enerji Kalkanları">
+                        <span class="shield-icon active">🛡️</span>
+                        <span class="shield-icon active">🛡️</span>
+                    </div>
+                    <button type="button" id="btn-pause" class="icon-btn" aria-label="Duraklat">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                            <rect x="6" y="4" width="4" height="16" rx="1"/>
+                            <rect x="14" y="4" width="4" height="16" rx="1"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <div id="supernova-banner" class="hidden">SÜPERNOVA AKTİF!</div>
+
+            <div class="combo-pill">
+                <span id="combo-value">x1</span>
+                <div class="combo-bar-bg">
+                    <div id="combo-bar-fill"></div>
+                </div>
+            </div>
+
+            <div id="supernova-banner" class="hidden">⚡ SÜPERNOVA AKTİF! ⚡</div>
+            <div id="levelup-banner" class="hidden">BÖLÜM TAMAMLANDI!</div>
             <div id="floating-text-container"></div>
         </div>
 
@@ -46,7 +61,7 @@
                     <span id="menu-stardust">0</span>
                 </div>
                 <button type="button" id="btn-settings" class="icon-btn" aria-label="Ayarlar">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                     </svg>
@@ -54,6 +69,7 @@
             </div>
 
             <div class="title-area">
+                <div class="level-pill-menu">BÖLÜM <span id="menu-current-level">1</span> / 200</div>
                 <h1 class="game-title">KRİSTAL<br><span>ÇEKİRDEK</span></h1>
                 <p class="best-score-display">EN YÜKSEK SKOR: <span id="menu-best-score">0</span></p>
             </div>
@@ -67,31 +83,31 @@
             </div>
 
             <div class="menu-actions">
-                <button type="button" id="btn-play" class="primary-btn pulse-anim">OYNA</button>
-                <button type="button" id="btn-shop" class="secondary-btn">KOLEKSİYON & TEMALAR</button>
+                <button type="button" id="btn-play" class="primary-btn pulse-anim">BÖLÜM <span id="btn-play-lvl">1</span> OYNA</button>
+                <button type="button" id="btn-shop" class="secondary-btn">KOLEKSİYON & EVRENLER</button>
             </div>
 
             <div class="tutorial-hint">
-                <span>Basılı Tut: Dışa Açıl • Bırak: Çekirdeğe Dön</span>
+                <span>Basılı Tut: Dışa Açıl • Bırak: İçe Çekil • Sarıları Topla!</span>
             </div>
         </div>
 
-        <!-- Duraklatma Ekranı -->
+        <!-- Duraklatma -->
         <div id="pause-screen" class="ui-layer modal hidden">
             <div class="modal-content">
                 <h2>OYUN DURAKLATILDI</h2>
                 <button type="button" id="btn-resume" class="primary-btn">DEVAM ET</button>
-                <button type="button" id="btn-restart-pause" class="secondary-btn">YENİDEN BAŞLAT</button>
+                <button type="button" id="btn-restart-pause" class="secondary-btn">BÖLÜMÜ YENİDEN BAŞLAT</button>
                 <button type="button" id="btn-quit" class="text-btn">ANA MENÜ</button>
             </div>
         </div>
 
-        <!-- Oyun Sonu Ekranı -->
+        <!-- Oyun Sonu -->
         <div id="gameover-screen" class="ui-layer modal hidden">
             <div class="modal-content">
-                <h2 id="gameover-title">ÇEKİRDEK ÇÖKTÜ</h2>
+                <h2 id="gameover-title">KALKANLAR TÜKENDİ</h2>
+                <p class="gameover-sub">Ulaşılan Bölüm: <strong id="final-level">1</strong> / 200</p>
                 <div id="new-record-badge" class="hidden">YENİ REKOR!</div>
-                
                 <div class="stats-grid">
                     <div class="stat-box">
                         <span class="stat-label">SKOR</span>
@@ -102,18 +118,16 @@
                         <span id="final-best" class="stat-val">0</span>
                     </div>
                 </div>
-
                 <div class="reward-box">
                     <span>Kazanılan Yıldız Tozu:</span>
                     <span class="reward-val">+<span id="earned-stardust">0</span> ✦</span>
                 </div>
-
-                <button type="button" id="btn-replay" class="primary-btn">TEKRAR OYNA</button>
+                <button type="button" id="btn-replay" class="primary-btn">TEKRAR DENE</button>
                 <button type="button" id="btn-home" class="secondary-btn">ANA MENÜ</button>
             </div>
         </div>
 
-        <!-- Koleksiyon / Mağaza Ekranı -->
+        <!-- Koleksiyon -->
         <div id="shop-screen" class="ui-layer modal hidden">
             <div class="modal-content shop-modal">
                 <div class="modal-header">
@@ -123,21 +137,16 @@
                         <span id="shop-stardust">0</span>
                     </div>
                 </div>
-                
                 <div class="shop-tabs">
                     <button type="button" class="tab-btn active" data-tab="skins">KIVILCIMLAR</button>
                     <button type="button" class="tab-btn" data-tab="themes">EVRENLER</button>
                 </div>
-
-                <div id="shop-items-grid" class="items-grid">
-                    <!-- JS ile doldurulacak -->
-                </div>
-
+                <div id="shop-items-grid" class="items-grid"></div>
                 <button type="button" id="btn-close-shop" class="secondary-btn">GERİ DÖN</button>
             </div>
         </div>
 
-        <!-- Ayarlar Ekranı -->
+        <!-- Ayarlar -->
         <div id="settings-screen" class="ui-layer modal hidden">
             <div class="modal-content">
                 <h2>AYARLAR</h2>
@@ -158,7 +167,6 @@
         </div>
     </div>
 
-    <!-- Sıralı Klasik Script Yüklemeleri (Sunucu gerektirmez) -->
     <script src="js/storage.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/particles.js"></script>
