@@ -1,4 +1,5 @@
 const GameData = {
+    MAX_LEVEL: 200,
     SKINS: [
         { id: 'sapphire', name: 'Safir Kıvılcım', color: '#00f2fe', trail: '#4facfe', price: 0 },
         { id: 'solar', name: 'Güneş Patlaması', color: '#ffd700', trail: '#ff6b00', price: 50 },
@@ -20,10 +21,12 @@ const GameData = {
 };
 
 const StorageManager = {
-    KEY: 'kristal_cekirdek_save_v1',
+    KEY: 'kristal_cekirdek_save_v2',
     state: null,
+
     init() {
         const defaultState = {
+            currentLevel: 1,
             bestScore: 0,
             stardust: 0,
             unlockedSkins: ['sapphire'],
@@ -34,6 +37,7 @@ const StorageManager = {
             missionProgress: 0,
             settings: { sfx: true, music: true, vibrate: true }
         };
+
         try {
             const raw = localStorage.getItem(this.KEY);
             if (raw) {
@@ -48,17 +52,34 @@ const StorageManager = {
         }
         this.save();
     },
+
     save() {
         try { localStorage.setItem(this.KEY, JSON.stringify(this.state)); } catch (e) {}
     },
+
+    getLevelConfig(level) {
+        const lvl = Math.max(1, Math.min(GameData.MAX_LEVEL, level));
+        return {
+            level: lvl,
+            targetCrystals: Math.min(25, 3 + Math.floor((lvl - 1) * 0.45)),
+            obstacleCount: Math.min(9, 1 + Math.floor(lvl / 4)),
+            speedMult: 0.72 + Math.min(1.1, (lvl - 1) * 0.008),
+            movingObstacles: lvl >= 4,
+            radialObstacles: lvl >= 10,
+            rewardStardust: 10 + Math.floor(lvl * 1.5)
+        };
+    },
+
     getActiveSkin() { return GameData.SKINS.find(s => s.id === this.state.selectedSkin) || GameData.SKINS[0]; },
     getActiveTheme() { return GameData.THEMES.find(t => t.id === this.state.selectedTheme) || GameData.THEMES[0]; },
+
     getCurrentMission() {
         const idx = this.state.missionIndex % GameData.MISSIONS.length;
         const base = GameData.MISSIONS[idx];
         const scale = Math.floor(this.state.missionIndex / GameData.MISSIONS.length) + 1;
         return { ...base, target: base.target * scale, reward: base.reward * scale };
     },
+
     updateMissionProgress(type, amount = 1) {
         const mission = this.getCurrentMission();
         if (mission.type !== type) return false;
@@ -73,6 +94,7 @@ const StorageManager = {
         this.save();
         return false;
     },
+
     vibrate(pattern) {
         if (this.state.settings.vibrate && navigator.vibrate) {
             try { navigator.vibrate(pattern); } catch (e) {}
